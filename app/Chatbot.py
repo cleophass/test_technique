@@ -30,7 +30,7 @@ for message in st.session_state.messages:
                 cols = st.columns(len(documents))
                 for idx, doc in enumerate(documents):
                     with cols[idx]:
-                        st.markdown(f"<span style='background-color: #e0e0e0; padding: 5px 10px; border-radius: 15px; font-size: 12px;'>📄 {doc.source['doc_title']}</span>", unsafe_allow_html=True)
+                        st.markdown(f"📄 - {doc.source['doc_title']}")
         
 if prompt := st.chat_input("Poser une question sur un document"):
     st.session_state.messages.append({"role": "user", "content": prompt})

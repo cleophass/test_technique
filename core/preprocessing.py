@@ -20,13 +20,14 @@ class Preprocessor:
     def process_file(self, file_path: str) -> str:
         print("file_path:", file_path)
         # Detect file type
+        json_result = None  
         if file_path.endswith('.csv'):
             json_result = self._process_csv(file_path)
         elif file_path.endswith('.html'):
             json_result = self._process_html(file_path)
         elif file_path.endswith('.txt'):
             json_result = self._process_txt(file_path)
-        
+    
         # save file type to clean_path
         if json_result:
             doc_title = json_result['doc_title']

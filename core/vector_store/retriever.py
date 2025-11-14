@@ -14,6 +14,9 @@ class Retriever:
         query_embedding = self.embedder.embed_text(query).embeddings
         # perform the search
         results = self.es_client.cosine_similarity_search(index_name="documents_index", query_embedding=query_embedding, top_k=top_k)
+        # limit to top_k results
+
+        results = results[:top_k]
         # create a ElasticsearchAnswer object 
         es_answer_items = []
         for item in results:

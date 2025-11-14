@@ -7,7 +7,7 @@ from core.types import Embeddings
 class Embedder:
     
     def __init__(self, model_name:str = EMBEDDINGS_MODEL_NAME):
-        self.model = SentenceTransformer(model_name)
+        self.model = SentenceTransformer(model_name, device='cpu')
         
     
     def embed_text(self, text:str) -> Embeddings:
