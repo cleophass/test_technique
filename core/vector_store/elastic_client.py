@@ -131,7 +131,7 @@ class ElasticClient:
                     },
                 }
             )
-            documents = [hit["_source"] for hit in response["hits"]["hits"]]
+            documents = response["hits"]["hits"]
             return documents
         except Exception as e:
             print("Error list ing documents:", e)

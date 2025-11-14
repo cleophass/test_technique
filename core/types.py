@@ -51,3 +51,8 @@ class ElasticsearchAnswerItem(BaseModel):
 class ElasticsearchAnswer(BaseModel):
     hits: List[ElasticsearchAnswerItem]
     
+class RAGResponse(BaseModel):
+    answer: str
+    source_documents: Optional[List[ElasticsearchAnswer]] = None
+    error: Optional[str] = None
+    details: Optional[str] = None

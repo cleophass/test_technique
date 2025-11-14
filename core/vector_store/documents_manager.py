@@ -4,6 +4,7 @@ from core.vector_store.elastic_client import ElasticClient
 from core.preprocessing import Preprocessor
 import json
 import datetime
+import os
 
 class DocumentsManager:
     def __init__(self, raw_path: str, clean_path: str):
@@ -56,8 +57,20 @@ class DocumentsManager:
         return embedded_doc
 
     # delete also documents
-    def delete_document(self, index_name: str, document_id: str) -> bool:
+    def delete_document(self, index_name: str, document_id: str, doc_name: str, full_path: str) -> bool:
         # we will also delete from folder raw and clean but we will need to get both file path and extension
+        _, file_extension = os.path.splitext(full_path)
+        raw_file_path = os.path.join(self.preprocessor.raw_path, doc_name + file_extension)
+        clean_file_path = os.path.join(self.preprocessor.clean_path, doc_name + ".json")
+        # delete files
+        try:
+            if os.path.exists(raw_file_path):
+                os.remove(raw_file_path)
+            if os.path.exists(clean_file_path):
+                os.remove(clean_file_path)
+        except Exception as e:
+            print(f"Error deleting files: {e}") 
+            
         res = self.es_client.delete_document(index_name, document_id)
         # delete from both raw and clean folders if needed
         

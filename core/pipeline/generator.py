@@ -3,7 +3,7 @@ from langchain.chat_models import init_chat_model
 from core.pipeline.prompts.generator import SYSTEM_PROMPT
 from core.config import GENERATOR_MODEL_NAME
 from typing import List
-# from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage
 from langchain.tools import ToolRuntime
 from langgraph.checkpoint.memory import InMemorySaver
 
@@ -44,7 +44,14 @@ class QAAgent:
                 {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {question}"}
             ]
         }
-
+        # we need a step to extract the answer from the response
+        
         response = self.agent.invoke(prompt, config=self.config)  # type: ignore
-        return response
-    
+        answer = self.get_answer(response)
+        return answer
+
+    def get_answer(self, response) -> str:
+        # Let's browse the response in inverse order and find the first AIMessage
+        for message in reversed(response["messages"]):
+            return message.content
+        return "There was an error generating the answer. Check in generator.py"

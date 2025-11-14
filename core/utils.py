@@ -1,4 +1,4 @@
-from core.types import ElasticsearchAnswer
+from core.types import ElasticsearchAnswer, RAGResponse
 
 
 class Utils():
@@ -20,3 +20,17 @@ class Utils():
         
         merged_answer = ElasticsearchAnswer(hits=list(items_dict.values()))
         return merged_answer
+    
+    def construct_RAGResponse(
+        self,
+        answer: str,
+        source_documents: ElasticsearchAnswer | None = None,
+        error: str|None = None,
+        details: str|None = None
+    ) -> 'RAGResponse':
+        return RAGResponse(
+            answer=answer,
+            source_documents=[source_documents] if source_documents is not None else None,
+            error=error,
+            details=details
+        )
