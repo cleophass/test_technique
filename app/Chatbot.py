@@ -4,19 +4,8 @@ from core.vector_store.history import History
 import uuid
 from core.setup import Setup
 
-
-        
 st.title("Hi, ask me anything about your documents!")
 
-
-if "history" not in st.session_state:
-    st.session_state.history = History()
-    
-if "current_conversation_id" not in st.session_state:
-    st.session_state.current_conversation_id = None
-
-my_history = st.session_state.history.list_history()
-    
 with st.sidebar:
     if "setup_verified" not in st.session_state:
         with st.spinner("Vérification..."):
@@ -35,6 +24,16 @@ with st.sidebar:
         if "pipeline" in st.session_state:
                 st.session_state.pipeline = RAGPipeline()
         st.rerun()
+        
+if "history" not in st.session_state:
+    st.session_state.history = History()
+    
+if "current_conversation_id" not in st.session_state:
+    st.session_state.current_conversation_id = None
+
+my_history = st.session_state.history.list_history()
+    
+with st.sidebar:
     if my_history:
         for conversation in my_history:
             if st.button(conversation["title"], type="secondary"):

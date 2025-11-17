@@ -153,6 +153,7 @@ chmod +x run.sh
 Le script effectue automatiquement :
 1. Démarrage des conteneurs Docker (Elasticsearch + Kibana)
 2. Lancement de l'application Streamlit
+PS: Le premier lancement peut prendre quelques minutes. N'hésitez pas a rafraichir 
 
 
 ### 3. Accéder à l'application

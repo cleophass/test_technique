@@ -21,8 +21,13 @@ class Setup:
         try : 
             print("Verifying document setup")
             
+            os.makedirs(self.raw_folder, exist_ok=True)
+            os.makedirs(self.clean_folder, exist_ok=True)
+            
+            
             raw_fnames = [ os.path.join(self.raw_folder, x) for x in os.listdir(self.raw_folder) if x.endswith('.txt') or x.endswith('.csv') or x.endswith('.html')]
             clean_fnames = [ os.path.join(self.clean_folder, x) for x in os.listdir(self.clean_folder) if x.endswith('.txt') or x.endswith('.csv') or x.endswith('.html')]
+            
             
             if len(raw_fnames) != len(clean_fnames) :    
                 print("Initializing DocumentsManager...")
