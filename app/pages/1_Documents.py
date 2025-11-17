@@ -2,7 +2,7 @@ import streamlit as st
 import os
 from pathlib import Path
 import pandas as pd
-
+from core.config import DOCUMENTS_INDEX_NAME
 from core.vector_store.documents_manager import DocumentsManager
 
 st.set_page_config(
@@ -16,7 +16,7 @@ if 'doc_manager' not in st.session_state:
     )
 
 if 'index_name' not in st.session_state:
-    st.session_state.index_name = "documents_index"
+    st.session_state.index_name = DOCUMENTS_INDEX_NAME
 
 
 # Titre principal

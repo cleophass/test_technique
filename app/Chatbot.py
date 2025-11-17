@@ -2,8 +2,12 @@ import streamlit as st
 from core.pipeline.pipeline import RAGPipeline
 from core.vector_store.history import History
 import uuid
+from core.setup import Setup
 
+
+        
 st.title("Hi, ask me anything about your documents!")
+
 
 if "history" not in st.session_state:
     st.session_state.history = History()
@@ -14,7 +18,18 @@ if "current_conversation_id" not in st.session_state:
 my_history = st.session_state.history.list_history()
     
 with st.sidebar:
-    if st.button("Nouvelle conversation"):
+    if "setup_verified" not in st.session_state:
+        with st.spinner("Vérification..."):
+            setup = Setup()
+            if setup.verify_setup():
+                st.session_state.setup_verified = True
+                st.success("Configuré", icon="✅")
+            else:
+                st.error("Erreur config", icon="❌")
+                st.stop()
+    else:
+        st.success("Configuré", icon="✅")
+    if st.button("+ Nouvelle conversation"):
         st.session_state.messages = []
         st.session_state.current_conversation_id = None
         if "pipeline" in st.session_state:
@@ -22,7 +37,7 @@ with st.sidebar:
         st.rerun()
     if my_history:
         for conversation in my_history:
-            if st.button(conversation["title"]):
+            if st.button(conversation["title"], type="secondary"):
                 st.session_state.messages = []
                 st.session_state.current_conversation_id = conversation["id"]
                 st.session_state.messages = st.session_state.history.load_messages(conversation["id"]) # type: ignore

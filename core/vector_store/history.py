@@ -4,10 +4,12 @@ from core.vector_store.elastic_client import ElasticClient
 import datetime
 from core.vector_store.mappings import HISTORY_INDEX_MAPPING, MESSAGE_INDEX_MAPPING
 from core.pipeline.title import TitleAgent
+from core.config import HISTORY_INDEX_NAME, MESSAGE_INDEX_NAME
+
 class History:
     def __init__(self):
-        self.history_index_name = "history_index" # -> index for conversations
-        self.message_index_name = "message_index" # -> index for messages
+        self.history_index_name = HISTORY_INDEX_NAME # -> index for conversations
+        self.message_index_name = MESSAGE_INDEX_NAME # -> index for messages
         self.es_client = ElasticClient(hosts="http://localhost:9200")
         self.history_index_mapping = HISTORY_INDEX_MAPPING
         self.message_index_mapping = MESSAGE_INDEX_MAPPING

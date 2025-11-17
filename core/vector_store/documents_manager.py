@@ -6,6 +6,7 @@ import json
 import datetime
 import os
 from core.vector_store.mappings import DOCUMENT_INDEX_MAPPING
+from core.config import DOCUMENTS_INDEX_NAME
 
 class DocumentsManager:
     def __init__(self, raw_path: str, clean_path: str):
@@ -13,9 +14,10 @@ class DocumentsManager:
         self.es_client = ElasticClient(hosts="http://localhost:9200")
         self.preprocessor = Preprocessor(raw_path=raw_path, clean_path=clean_path)
         self.document_index_mapping = DOCUMENT_INDEX_MAPPING
+        self.documents_index_name = DOCUMENTS_INDEX_NAME
         
-    def create_document_index(self, index_name: str):
-        self.es_client.create_index(index_name, mappings=self.document_index_mapping)
+    def create_document_index(self):
+        self.es_client.create_index(self.documents_index_name, mappings=self.document_index_mapping)
             
     def add_document(self, index_name: str, document_path: str) -> bool:
         # this function will be called after loading a documents from streamlit
