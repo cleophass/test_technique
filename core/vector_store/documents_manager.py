@@ -22,37 +22,65 @@ class DocumentsManager:
     def add_document(self, index_name: str, document_path: str) -> bool:
         # this function will be called after loading a documents from streamlit
         # first preprocess the document
-        clean_file_path = self.preprocessor.process_file(document_path)
-        if not clean_file_path:
-            print("Failed to preprocess document.")
+        try:
+            clean_file_path = self.preprocessor.process_file(document_path)
+            if not clean_file_path:
+                print("Failed to preprocess document.")
+                return False
+        except Exception as e:
+            print(f"Error preprocessing document: {e}")
             return False
+            
         # read file as json
-        with open(clean_file_path, "r", encoding="utf-8") as file:
-            document_content = file.read()
-            document_content = json.loads(document_content)
+        try:
+            with open(clean_file_path, "r", encoding="utf-8") as file:
+                document_content = file.read()
+                document_content = json.loads(document_content)
+        except Exception as e:
+            print(f"Error reading or parsing JSON file: {e}")
+            return False
         
         # embed file
-        embedded_doc = self.embed_document(clean_file_path)
+        try:
+            embedded_doc = self.embed_document(clean_file_path)
+        except Exception as e:
+            print(f"Error embedding document: {e}")
+            return False
         
         # create DocumentMetadata
-        metadata = DocumentMetadata(
-            source=document_content.get("metadata", {}).get("source", ""),
-            date=document_content.get("metadata", {}).get("date"),
-            modified=document_content.get("metadata", {}).get("modified"),
-            embedding_model=embedded_doc.metadata.embedding_model,
-            embedding_date=embedded_doc.metadata.embedding_date,
-            embedding_dimension=embedded_doc.metadata.embedding_dimension
-        )
+        try:
+            doc_metadata = document_content.get("metadata", {})
+            date_value = doc_metadata.get("date")
+            modified_value = doc_metadata.get("modified")
+            
+            date_value = date_value if date_value else None
+            modified_value = modified_value if modified_value else None
 
-        document = Document(
-            doc_title=document_content.get("doc_title", "untitled"),
-            content=str(document_content.get("content", "")), 
-            embeddings=embedded_doc.embeddings,
-            metadata=metadata,
-            indexed_at=datetime.datetime.now())
+            metadata = DocumentMetadata(
+                source=document_content.get("metadata", {}).get("source", ""),
+                date=date_value,
+                modified=modified_value,
+                embedding_model=embedded_doc.metadata.embedding_model,
+                embedding_date=embedded_doc.metadata.embedding_date,
+                embedding_dimension=embedded_doc.metadata.embedding_dimension
+            )
 
-        res = self.es_client.index_document(index_name, document)
-        return res
+            document = Document(
+                doc_title=document_content.get("doc_title", "untitled"),
+                content=str(document_content.get("content", "")), 
+                embeddings=embedded_doc.embeddings,
+                metadata=metadata,
+                indexed_at=datetime.datetime.now())
+        except Exception as e:
+            print(f"Error creating document metadata or document: {e}")
+            return False
+
+        try:
+            res = self.es_client.index_document(index_name, document)
+            return res
+        except Exception as e:
+            print(f"Error indexing document to Elasticsearch: {e}")
+            return False
     
     # manage also embeddings
     def embed_document(self, document_path: str) -> Embeddings:

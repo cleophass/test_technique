@@ -8,7 +8,6 @@ from core.vector_store.documents_manager import DocumentsManager
 st.set_page_config(
     layout="wide"
 )
-# Initialisation de session state
 if 'doc_manager' not in st.session_state:
     st.session_state.doc_manager = DocumentsManager(
         raw_path="data/raw",
@@ -26,18 +25,15 @@ st.header("Config")
 st.badge("Index :" + st.session_state.index_name, color="blue")
 
 index_name = st.session_state.index_name    
-# Verify the index exists
 index_exists = st.session_state.doc_manager.es_client.verify_index(index_name)
 
 if index_exists:
     st.success("✅ Index connecté")
-    # Récupérer les documents
     documents = st.session_state.doc_manager.es_client.list_documents(index_name)
     st.metric("Nombre de documents", len(documents))
 else:
     st.warning("⚠️ Index non trouvé")
 
-# Tabs pour différentes fonctionnalités
 tab1, tab2 = st.tabs(["Liste des Documents", "Ajouter un Document"])
 
 # TAB 1: Liste des documents
@@ -114,14 +110,14 @@ with tab1:
     else:
         st.warning("L'index n'existe pas. Créez-le depuis la barre latérale.")
 
-# TAB 2: Ajouter un document
 with tab2:
     st.header("Ajouter un nouveau document")
     
     uploaded_file = st.file_uploader(
         "Choisir un fichier",
         type=["txt", "csv", "html"],
-        help="Formats supportés: TXT, CSV, HTML"
+        help="Formats supportés: TXT, CSV, HTML",
+        accept_multiple_files=False
     )
     
     if uploaded_file:
@@ -170,7 +166,6 @@ with tab2:
                 status_text.text("🧮 Génération des embeddings...")
                 progress_bar.progress(60)
                 
-                # Lancer le traitement
                 success = st.session_state.doc_manager.add_document(
                     index_name,
                     str(file_path)
