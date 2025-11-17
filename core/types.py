@@ -13,11 +13,11 @@ class DocumentMetadata(BaseModel):
 
 
 class Document(BaseModel):
-    doc_title: str = Field(..., description="Titre du document")
-    content: str = Field(..., description="Contenu du document")
-    embeddings: List[float] = Field(..., description="Vecteur d'embeddings")
-    metadata: DocumentMetadata = Field(..., description="Métadonnées du document")
-    indexed_at: Optional[datetime] = Field(default=None, description="Date d'indexation")
+    doc_title: str 
+    content: str 
+    embeddings: List[float] 
+    metadata: DocumentMetadata 
+    indexed_at: Optional[datetime] 
     
 class EmbeddingsMetadata(BaseModel):
     embedding_model: str
@@ -25,9 +25,9 @@ class EmbeddingsMetadata(BaseModel):
     embedding_dimension: int
     
 class Embeddings(BaseModel):
-    text: str = Field(..., description="Texte à encoder")
-    embeddings: List[float] = Field(..., description="Vecteur d'embeddings")
-    metadata: EmbeddingsMetadata = Field(..., description="Métadonnées des embeddings")
+    text: str 
+    embeddings: List[float] 
+    metadata: EmbeddingsMetadata 
     
     
 class GuardAgentResponse(BaseModel):
@@ -56,3 +56,6 @@ class RAGResponse(BaseModel):
     source_documents: Optional[List[ElasticsearchAnswer]] = None
     error: Optional[str] = None
     details: Optional[str] = None
+
+class TitleAgentResponse(BaseModel):
+    title: str

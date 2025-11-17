@@ -3,7 +3,7 @@ from core.pipeline.rewriter import RewriterAgent
 from core.pipeline.hyde import HyDEAgent
 from core.pipeline.reranker import Reranker
 from core.pipeline.generator import QAAgent
-from core.types import GuardAgentResponse, ElasticsearchAnswer, RAGResponse
+from core.types import GuardAgentResponse, ElasticsearchAnswer, RAGResponse, ElasticsearchAnswerItem
 from core.vector_store.retriever import Retriever
 from typing import Dict, List, Optional, Callable
 from core.utils import Utils    
@@ -20,9 +20,9 @@ class RAGPipeline:
         self.reranker = Reranker()
         self.qa_agent = QAAgent()
         self.utils = Utils()
+
         
-        
-    
+
     
     def process_query(self, question: str, status_callback: Optional[Callable[[str], None]] = None
 ) -> RAGResponse:
@@ -157,3 +157,5 @@ class RAGPipeline:
                 error="Answer generation failed",
                 details=str(e)
             )
+            
+    

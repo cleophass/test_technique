@@ -18,53 +18,7 @@ class ElasticClient:
         else:
             return False
     
-    def create_document_index(self, index_name: str, embeddings_dimension: int):
-        try : 
-            if not self.verify_index(index_name):
-                self.es.indices.create(
-                    index=index_name,
-                    mappings={
-                        "properties": {
-                            "doc_title": { "type": "text"  },
-                            "content": { "type": "text"  },
-                            "embeddings": { "type": "dense_vector", "dims": embeddings_dimension},
-                            "metadata": {
-                                "properties": {
-                                    "source": { "type": "keyword" },
-                                    "date": { "type": "date", "format": "yyyy-MM-dd||yyyy" },
-                                    "modified": { "type": "date", "format": "yyyy-MM-dd" },
-                                    "embedding_model": { "type": "keyword" },
-                                    "embedding_date": { "type": "date", "format": "yyyy-MM-dd" },
-                                    "embedding_dimension": { "type": "integer" }
-                                }
-                            },
-                            "indexed_at": {"type": "date"}
-                        } }
-                    )
-                print("Index created successfully.")
-            else:
-                print("Index already exists.")
-        except Exception as e:
-            print("Error creating index:", e)
-            
-    def create_logs_index(self, index_name: str):
-        try : 
-            if not self.verify_index(index_name):
-                self.es.indices.create(
-                    index=index_name,
-                    mappings={
-                        "properties": {
-                        "log_message": { "type": "text"  },
-                        "log_level": { "type": "keyword"  },
-                        "timestamp": { "type": "date", "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis" }
-                    } }
-                )
-                print("Logs Index created successfully.")
-            else:
-                print("Logs Index already exists.")
-        except Exception as e:
-            print("Error creating logs index:", e)
-
+        
     def index_document(self, index_name: str, document: Document) -> bool:
         # first we validate the document using Pydantic
         try:
@@ -105,20 +59,6 @@ class ElasticClient:
             print("Error deleting document:", e)
             return False
     
-    def log_handler(self, index_name: str, log_message: str, log_level: str = "INFO") -> bool:
-        # this function will be used to log different events in the system
-        try :
-            log_entry = {
-                "log_message": log_message,
-                "log_level": log_level,
-                "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            self.es.index(index=index_name, document=log_entry)
-            return True
-    
-        except Exception as e:
-            print("Error logging entry:", e)
-            return False
         
     # We will need a function to see available documents 
     def list_documents(self, index_name: str) -> List[Dict]:
@@ -155,5 +95,18 @@ class ElasticClient:
         except Exception as e:
             print("Error during cosine similarity search:", e)
             return [{}]
-        
-
+    
+    def create_index(self, index_name: str, mappings: Dict):
+        try :
+            if not self.verify_index(index_name):
+                self.es.indices.create(
+                    index=index_name,
+                    mappings=mappings
+                )
+                print(f"Index {index_name} created successfully.")
+            else:
+                print(f"Index {index_name} already exists.")
+        except Exception as e:
+            print(f"Error creating index {index_name}:", e)
+       
+    

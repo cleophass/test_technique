@@ -1,20 +1,35 @@
 import streamlit as st
 from core.pipeline.pipeline import RAGPipeline
-
+from core.vector_store.history import History
+import uuid
 
 st.title("Hi, ask me anything about your documents!")
 
+if "history" not in st.session_state:
+    st.session_state.history = History()
+    
+if "current_conversation_id" not in st.session_state:
+    st.session_state.current_conversation_id = None
 
+my_history = st.session_state.history.list_history()
+    
 with st.sidebar:
     if st.button("Nouvelle conversation"):
         st.session_state.messages = []
+        st.session_state.current_conversation_id = None
         if "pipeline" in st.session_state:
                 st.session_state.pipeline = RAGPipeline()
         st.rerun()
+    if my_history:
+        for conversation in my_history:
+            if st.button(conversation["title"]):
+                st.session_state.messages = []
+                st.session_state.current_conversation_id = conversation["id"]
+                st.session_state.messages = st.session_state.history.load_messages(conversation["id"]) # type: ignore
+                st.rerun() 
     
 if "pipeline" not in st.session_state:
     st.session_state.pipeline = RAGPipeline()
-
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -33,6 +48,17 @@ for message in st.session_state.messages:
                         st.markdown(f"📄 - {doc.source['doc_title']}")
         
 if prompt := st.chat_input("Poser une question sur un document"):
+    if st.session_state.current_conversation_id is None:
+        new_conversation_id = str(uuid.uuid4())
+        st.session_state.current_conversation_id = new_conversation_id
+        st.session_state.history.create_conversation(new_conversation_id, message=prompt)
+        
+    st.session_state.history.add_message(
+        conversation_id=st.session_state.current_conversation_id,
+        role="user",
+        message=prompt
+    )
+    
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -44,7 +70,8 @@ if prompt := st.chat_input("Poser une question sur un document"):
             def status_callback(message: str):
                 status_placeholder.text(message)
             
-            response = st.session_state.pipeline.process_query(prompt, status_callback=status_callback)
+        response = st.session_state.pipeline.process_query(prompt, status_callback=status_callback)
+
             
             
         if response.error:
@@ -64,10 +91,16 @@ if prompt := st.chat_input("Poser une question sur un document"):
                 state="complete", 
                 expanded=False
             )
-            st.markdown(response.answer)
-            st.session_state.messages.append({
-                "role": "assistant", 
-                "content": response.answer,
-                "sources" : response.source_documents
-            })
+        st.markdown(response.answer)
+        st.session_state.history.add_message(
+            conversation_id=st.session_state.current_conversation_id,
+            role="assistant",
+            message=response.answer
+        )
+        
+        st.session_state.messages.append({
+            "role": "assistant", 
+            "content": response.answer,
+            "sources" : response.source_documents
+        })
     st.rerun()
