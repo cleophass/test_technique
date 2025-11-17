@@ -26,7 +26,7 @@ class Setup:
             
             
             raw_fnames = [ os.path.join(self.raw_folder, x) for x in os.listdir(self.raw_folder) if x.endswith('.txt') or x.endswith('.csv') or x.endswith('.html')]
-            clean_fnames = [ os.path.join(self.clean_folder, x) for x in os.listdir(self.clean_folder) if x.endswith('.txt') or x.endswith('.csv') or x.endswith('.html')]
+            clean_fnames = [ os.path.join(self.clean_folder, x) for x in os.listdir(self.clean_folder) if x.endswith('.json')]
             
             
             if len(raw_fnames) != len(clean_fnames) :    

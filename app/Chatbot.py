@@ -86,35 +86,38 @@ if prompt := st.chat_input("Poser une question sur un document"):
             
         response = st.session_state.pipeline.process_query(prompt, status_callback=status_callback)
 
-            
-            
         if response.error:
-                status.update(
-                    label="Erreur lors du traitement", 
-                    state="error", 
-                    expanded=True
-                )
-                st.markdown(f"Error: {response.error}\nDetails: {response.details}")
-                st.session_state.messages.append({
-                    "role": "assistant", 
-                    "content": f"Error: {response.error}\nDetails: {response.details}"
-                })
+            status.update(
+                label="Erreur lors du traitement",
+                state="error",
+                expanded=True
+            )
+            error_text = f"Details: {response.details}"
+            st.markdown(error_text)
+            st.session_state.history.add_message(
+                conversation_id=st.session_state.current_conversation_id,
+                role="assistant",
+                message=error_text
+            )
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": error_text
+            })
         else:
             status.update(
-                label="Traitement terminé ✓", 
-                state="complete", 
+                label="Traitement terminé ✓",
+                state="complete",
                 expanded=False
             )
-        st.markdown(response.answer)
-        st.session_state.history.add_message(
-            conversation_id=st.session_state.current_conversation_id,
-            role="assistant",
-            message=response.answer
-        )
-        
-        st.session_state.messages.append({
-            "role": "assistant", 
-            "content": response.answer,
-            "sources" : response.source_documents
-        })
+            st.markdown(response.answer)
+            st.session_state.history.add_message(
+                conversation_id=st.session_state.current_conversation_id,
+                role="assistant",
+                message=response.answer
+            )
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": response.answer,
+                "sources": response.source_documents
+            })
     st.rerun()
