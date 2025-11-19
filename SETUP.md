@@ -119,7 +119,14 @@ touch .env
 ```env
 OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
+### 3. Configurer LangSmith (optionnel)
+Si vous souhaitez utiliser LangSmith pour le traçage, ajoutez également :
 
+```env
+LANGSMITH_API_KEY=lsv2_pt_....
+LANGCHAIN_TRACING_V2=true
+```
+Pour accéder a "traces" dans LangSmith, vous pouvez utiliser ce lien : https://smith.langchain.com/
 
 ### 3. Vérifier la configuration dans `core/config.py`
 
