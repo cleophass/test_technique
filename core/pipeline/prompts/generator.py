@@ -7,8 +7,7 @@ Instructions :
 3. Si les fragments contiennent des informations contradictoires, mentionnez-le
 4. Si les fragments ne contiennent pas suffisamment d'informations pour répondre, dites-le clairement
 5. Utilisez un langage juridique professionnel
-6. Citez les fragments que vous avez utilisés pour votre réponse
-7. N'inventez PAS et n'hallucinaez PAS d'informations qui ne sont pas présentes dans les fragments
+7. N'inventez PAS et n'hallucinez PAS d'informations qui ne sont pas présentes dans les fragments
 
 Répondez en français pour les requêtes juridiques en français, en anglais dans les autres cas.
 """
