@@ -5,7 +5,7 @@ import os
 from core.vector_store.documents_manager import DocumentsManager
 from core.vector_store.history import History
 from core.config import DOCUMENTS_INDEX_NAME, HISTORY_INDEX_NAME, MESSAGE_INDEX_NAME
-
+from core.vector_store.logger import ActivityLogger
 
 class Setup:
     
@@ -16,11 +16,23 @@ class Setup:
         self.documents_index_name = DOCUMENTS_INDEX_NAME
         self.history_index_name = HISTORY_INDEX_NAME
         self.message_index_name = MESSAGE_INDEX_NAME
+        self.activity_logger = ActivityLogger(source="setup")
 
     def verify_setup(self) -> bool:
-        try : 
-            print("Verifying document setup")
+        try: 
+            print("SETUP: Verifying logger setup")
+            if self.activity_logger.es_client.verify_index(self.activity_logger.logger_index_name):
+                print("SETUP: Logger index exist")
+            else :
+                print("SETUP: Logger index do not exist")
+                self.activity_logger.create_index()
+        except Exception as e:
+            self.activity_logger.log_interaction(f"logger setup error : {e}", "error")
+            return False
             
+        
+        try : 
+            print("SETUP: Verifying document setup")
             os.makedirs(self.raw_folder, exist_ok=True)
             os.makedirs(self.clean_folder, exist_ok=True)
             
@@ -30,47 +42,46 @@ class Setup:
             
             
             if len(raw_fnames) != len(clean_fnames) :    
-                print("Initializing DocumentsManager...")
+                print("SETUP: Initializing DocumentsManager...")
                 doc_manager = DocumentsManager(
                 raw_path="data/raw",
                 clean_path="data/clean"
             )
-                print("DocumentsManager initialized successfully")
+                print("SETUP: DocumentsManager initialized successfully")
                 
-                print("Verify that index as been created...")
+                print("SETUP: Verify that index as been created...")
                 if doc_manager.es_client.verify_index(self.documents_index_name):
-                    print("Index exist")
+                    print("SETUP: Index exist")
                 else :
-                    print("Index does not exist")
+                    print("SETUP: Index does not exist")
                     doc_manager.create_document_index()
             
 
-                print("Starting to process folder...")
+                print("SETUP: Starting to process folder...")
                 doc_manager.process_folder("documents_index","data/raw")
-                print("Folder processing completed")
             else:
-                print("Documents already processed.")
+                print("SETUP: Documents already processed.")
         except Exception as e:
-            print("documents processing error : ",e)
+            self.activity_logger.log_interaction(f"documents processing error : {e}", "error")
             return False
         
 
 
         try :
-            print("Verifying history setup")
+            print("SETUP: Verifying history setup")
             history_manager = History()
             if history_manager.es_client.verify_index(self.history_index_name):
-                print("exist")
+                print("SETUP: history index exist")
             else : 
-                print("do not exist")
+                print("SETUP: history index do not exist")
                 history_manager.create_history_index()
-            print("History setup verified")
+            print("SETUP: History setup verified")
             if history_manager.es_client.verify_index(self.message_index_name):
-                print("exist")
+                print("SETUP: message index exist")
             else :
-                print("do not exist")
+                print("SETUP: message index do not exist")
                 history_manager.create_message_index()
         except Exception as e:
-            print("error : ",e)
+            self.activity_logger.log_interaction(f"error : {e}", "error")
             return False
         return True

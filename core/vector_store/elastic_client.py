@@ -1,9 +1,9 @@
 from elasticsearch import Elasticsearch
 from typing import Dict, List, Any
 from elasticsearch import helpers
-import datetime
 from pydantic import ValidationError
 from core.types import Document
+
 
 class ElasticClient:
 
@@ -24,11 +24,11 @@ class ElasticClient:
         try:
             Document(**document.model_dump()) # this will raise an error if the types are not correct
         except ValidationError as e:
-            print("invalid types:", e)
+            print(f"ES: Invalid document types: {e}")
             return False
         
         self.es.index(index=index_name, document=document.model_dump())
-        print("Document indexed successfully, name:", document.doc_title)
+        print(f"ES: Document indexed successfully, name: {document.doc_title}")
         return True    
     
     def bulk_index_documents(self, index_name: str, documents: List[Document]) -> bool:
@@ -36,7 +36,7 @@ class ElasticClient:
             for document in documents:
                 Document(**document.model_dump())  # this will raise an error if the types are not correct
         except ValidationError as e:
-            print("invalid types:", e)
+            print(f"ES: Invalid document types in bulk: {e}")
             return False
         
         actions = [
@@ -47,16 +47,16 @@ class ElasticClient:
             for document in documents
         ]
         helpers.bulk(self.es, actions)
-        print(f"Bulk indexed {len(documents)} documents successfully.")
+        print(f"ES: Bulk indexed {len(documents)} documents successfully.")
         return True
             
     def delete_document(self, index_name: str, document_id: str) -> bool:
         try:
             self.es.delete(index=index_name, id=document_id)
-            print(f"Document with ID {document_id} deleted successfully.")
+            print(f"ES: Document with ID {document_id} deleted successfully.")
             return True
         except Exception as e:
-            print("Error deleting document:", e)
+            print(f"ES: Error deleting document: {e}")
             return False
     
         
@@ -74,7 +74,7 @@ class ElasticClient:
             documents = response["hits"]["hits"]
             return documents
         except Exception as e:
-            print("Error list ing documents:", e)
+            print(f"ES: Error listing documents: {e}")
             return []
     
     def cosine_similarity_search(self, index_name: str, query_embedding: List[float], top_k: int = 5) -> List[Dict[str, Any]]:
@@ -93,7 +93,7 @@ class ElasticClient:
                 return [{}]
             return response["hits"]["hits"]
         except Exception as e:
-            print("Error during cosine similarity search:", e)
+            print(f"ES: Error during cosine similarity search: {e}")
             return [{}]
     
     def create_index(self, index_name: str, mappings: Dict):
@@ -103,10 +103,10 @@ class ElasticClient:
                     index=index_name,
                     mappings=mappings
                 )
-                print(f"Index {index_name} created successfully.")
+                print(f"ES: Index {index_name} created successfully.")
             else:
-                print(f"Index {index_name} already exists.")
+                print(f"ES: Index {index_name} already exists.")
         except Exception as e:
-            print(f"Error creating index {index_name}:", e)
+            print(f"ES: Error creating index {index_name}: {e}")
        
     

@@ -14,3 +14,4 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 DOCUMENTS_INDEX_NAME="documents_index"
 HISTORY_INDEX_NAME="history_index"
 MESSAGE_INDEX_NAME="message_index"
+LOGGER_INDEX_NAME="logger_index"

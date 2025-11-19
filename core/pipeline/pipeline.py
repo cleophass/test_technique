@@ -7,6 +7,7 @@ from core.types import GuardAgentResponse, ElasticsearchAnswer, RAGResponse, Ela
 from core.vector_store.retriever import Retriever
 from typing import Dict, List, Optional, Callable
 from core.utils import Utils    
+from core.vector_store.logger import ActivityLogger
 
 
 class RAGPipeline:
@@ -20,7 +21,7 @@ class RAGPipeline:
         self.reranker = Reranker()
         self.qa_agent = QAAgent()
         self.utils = Utils()
-
+        self.activity_logger = ActivityLogger("rag_pipeline")
         
 
     
@@ -30,7 +31,7 @@ class RAGPipeline:
             """Helper to update status if callback is provided"""
             if status_callback:
                 status_callback(message)
-            print(message)  
+            print(f"RAGPPELINE: {message}")  
 
         # first step are the guardrails
         try:
@@ -48,7 +49,7 @@ class RAGPipeline:
                     details=guard_response.reasons
                 )
         except Exception as e:
-            print(f"Error during guardrail validation: {e}")
+            self.activity_logger.log_interaction(f"Error during guardrail validation: {e}", "error")
             return self.utils.construct_RAGResponse(
                 answer="",
                 error="Guardrail validation failed",
@@ -61,7 +62,7 @@ class RAGPipeline:
             
             rewritten_question = self.rewriter_agent.rewrite_question(question)
         except Exception as e:
-            print(f"Error during question rewriting: {e}")
+            self.activity_logger.log_interaction(f"Error during question rewriting: {e}", "error")
             return self.utils.construct_RAGResponse(
                 answer="",
                 error="Question rewriting failed",
@@ -77,7 +78,7 @@ class RAGPipeline:
             hyde_response = self.hyde_agent.generate_hyde(rewritten_question.rewritten_question)
             
         except Exception as e:
-            print(f"Error during HyDE generation: {e}")
+            self.activity_logger.log_interaction(f"Error during HyDE generation: {e}", "error")
             return self.utils.construct_RAGResponse(
                 answer="",
                 error="HyDE generation failed",
@@ -95,6 +96,7 @@ class RAGPipeline:
             update_status(f"Retrieved {len(rewritten_docs.hits)} documents for rewritten question.")
 
         except Exception as e:
+            self.activity_logger.log_interaction(f"Error during document retrieval: {e}", "error")
             update_status(f"Error during document retrieval: {e}")
             return self.utils.construct_RAGResponse(
                 answer="",
@@ -108,7 +110,7 @@ class RAGPipeline:
             hyde_docs = self.retriever.retrieve_documents(hyde_response.hypothetical_answer, top_k=4)
             update_status(f"Retrieved {len(hyde_docs.hits)} documents for HyDE question.")
         except Exception as e:
-            print(f"Error during document retrieval for HyDE: {e}")
+            self.activity_logger.log_interaction(f"Error during document retrieval for HyDE: {e}", "error")
             return self.utils.construct_RAGResponse(
                 answer="",
                 error="Document retrieval for HyDE failed",
@@ -128,7 +130,7 @@ class RAGPipeline:
             reranked_contents = [doc.source.get('content', '') for doc in reranked_docs.hits]
             update_status(f"Reranked to {len(reranked_docs.hits)} documents.")
         except Exception as e:
-            print(f"Error during document reranking: {e}")
+            self.activity_logger.log_interaction(f"Error during document reranking: {e}", "error")
             return self.utils.construct_RAGResponse(
                 answer="",
                 error="Document reranking failed",
@@ -151,7 +153,7 @@ class RAGPipeline:
             
             return final_response
         except Exception as e:
-            print(f"Error during answer generation: {e}")
+            self.activity_logger.log_interaction(f"Error during answer generation: {e}", "error")
             return self.utils.construct_RAGResponse(
                 answer="",
                 error="Answer generation failed",

@@ -48,3 +48,19 @@ DOCUMENT_INDEX_MAPPING ={
                             },
                             "indexed_at": {"type": "date"}
                         } }
+
+LOGGER_INDEX_MAPPING = {
+    "properties": {
+        "timestamp": { "type": "date", "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis" },
+        "level": {
+            "type": "keyword"
+        },
+        "message": {
+            "type": "text"
+        },
+
+        "source": {
+            "type": "keyword"
+        }
+    }
+}

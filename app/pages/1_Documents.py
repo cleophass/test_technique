@@ -4,64 +4,91 @@ from pathlib import Path
 import pandas as pd
 from core.config import DOCUMENTS_INDEX_NAME
 from core.vector_store.documents_manager import DocumentsManager
+from core.vector_store.logger import ActivityLogger
+import traceback
+
+activity_logger = ActivityLogger(source="documents_manager")
 
 st.set_page_config(
     layout="wide"
 )
+
 if 'doc_manager' not in st.session_state:
-    st.session_state.doc_manager = DocumentsManager(
-        raw_path="data/raw",
-        clean_path="data/clean"
-    )
+    try:
+        st.session_state.doc_manager = DocumentsManager(
+            raw_path="data/raw",
+            clean_path="data/clean"
+        )
+    except Exception as e:
+        st.error(f"Erreur lors de l'initialisation du gestionnaire de documents: {str(e)}")
+        activity_logger.log_interaction(f"DocumentsManager initialization error: {str(e)}\n{traceback.format_exc()}", "error")
+        st.stop()
 
 if 'index_name' not in st.session_state:
     st.session_state.index_name = DOCUMENTS_INDEX_NAME
 
 
-# Titre principal
 st.title("Gestionnaire de documents")
 
 st.header("Config")
 st.badge("Index :" + st.session_state.index_name, color="blue")
 
-index_name = st.session_state.index_name    
-index_exists = st.session_state.doc_manager.es_client.verify_index(index_name)
+index_name = st.session_state.index_name
 
-if index_exists:
-    st.success("✅ Index connecté")
-    documents = st.session_state.doc_manager.es_client.list_documents(index_name)
-    st.metric("Nombre de documents", len(documents))
-else:
-    st.warning("⚠️ Index non trouvé")
+try:
+    index_exists = st.session_state.doc_manager.es_client.verify_index(index_name)
+    
+    if index_exists:
+        st.success("✅ Index connecté")
+        try:
+            documents = st.session_state.doc_manager.es_client.list_documents(index_name)
+            st.metric("Nombre de documents", len(documents))
+        except Exception as e:
+            st.error(f"Erreur lors du chargement des documents: {str(e)}")
+            activity_logger.log_interaction(f"Document list loading error: {str(e)}", "error")
+    else:
+        st.warning("⚠️ Index non trouvé")
+except Exception as e:
+    st.error(f"Erreur lors de la vérification de l'index: {str(e)}")
+    activity_logger.log_interaction(f"Index verification error: {str(e)}\n{traceback.format_exc()}", "error")
+    st.stop()
 
 tab1, tab2 = st.tabs(["Liste des Documents", "Ajouter un Document"])
 
-# TAB 1: Liste des documents
 with tab1:
     st.header("Documents indexés")
     
     if index_exists:
-        documents = st.session_state.doc_manager.es_client.list_documents(index_name)
-        
-        if documents:
-            # Display documents in a table
-            doc_data = []
-            for idx, doc in enumerate(documents):
-                doc_data.append({
-                    "Index": idx,
-                    "Titre": doc["_source"].get("doc_title", "Sans titre"),
-                    "Source": doc["_source"].get("metadata", {}).get("source", "N/A"),
-                    "Date": doc["_source"].get("metadata", {}).get("date", "N/A"),
-                    "Indexé le": doc["_source"].get("indexed_at", "N/A"),
-                    "Modèle": doc["_source"].get("metadata", {}).get("embedding_model", "N/A")
-                })
+        try:
+            documents = st.session_state.doc_manager.es_client.list_documents(index_name)
             
-            df = pd.DataFrame(doc_data)
-            st.dataframe(df, hide_index=True)
+            if documents:
+                doc_data = []
+                for idx, doc in enumerate(documents):
+                    try:
+                        doc_data.append({
+                            "Index": idx,
+                            "Titre": doc["_source"].get("doc_title", "Sans titre"),
+                            "Source": doc["_source"].get("metadata", {}).get("source", "N/A"),
+                            "Date": doc["_source"].get("metadata", {}).get("date", "N/A"),
+                            "Indexé le": doc["_source"].get("indexed_at", "N/A"),
+                            "Modèle": doc["_source"].get("metadata", {}).get("embedding_model", "N/A")
+                        })
+                    except Exception as e:
+                        activity_logger.log_interaction(f"Error parsing document {idx}: {str(e)}", "error")
+                        continue
+                
+                if doc_data:
+                    df = pd.DataFrame(doc_data)
+                    st.dataframe(df, hide_index=True)
+                else:
+                    st.warning("Aucun document valide trouvé.")
+        except Exception as e:
+            st.error(f"Erreur lors du chargement de la liste: {str(e)}")
+            activity_logger.log_interaction(f"Documents list error: {str(e)}", "error")
             
             st.subheader("Détails et Actions")
             
-            # Select a document to view details
             selected_idx = st.selectbox(
                 "Sélectionner un document pour voir les détails",
                 options=range(len(documents)),
@@ -98,11 +125,20 @@ with tab1:
                 with col2:
                     st.markdown("### 🗑️ Supprimer")
                     if st.button("Supprimer ce document", type="secondary"):
-                        res = st.session_state.doc_manager.delete_document(index_name, selected_doc["_id"], selected_doc["_source"].get("doc_title", ""),
-                                                                             selected_doc["_source"].get("metadata", {}).get("source", ""))
-                        if res:
-                            st.success("Document supprimé!")
-                            
+                        try:
+                            activity_logger.log_interaction(f"Document deleted: {selected_doc['_id']}", "info")
+                            res = st.session_state.doc_manager.delete_document(
+                                index_name, 
+                                selected_doc["_id"], 
+                                selected_doc["_source"].get("doc_title", ""),
+                                selected_doc["_source"].get("metadata", {}).get("source", "")
+                            )
+                            if res:
+                                st.success("Document supprimé!")
+                                st.rerun()
+                        except Exception as e:
+                            st.error(f"Erreur lors de la suppression: {str(e)}")
+                            activity_logger.log_interaction(f"Document deletion error: {str(e)}\n{traceback.format_exc()}", "error")
                         
                   
         else:
@@ -123,7 +159,6 @@ with tab2:
     if uploaded_file:
         st.success(f"Fichier chargé: {uploaded_file.name}")
         
-        # Afficher un aperçu
         with st.expander("Aperçu du fichier"):
             try:
                 if uploaded_file.type == "text/plain":
@@ -138,52 +173,62 @@ with tab2:
                     st.code(content[:500] + "...", language="html")
                     uploaded_file.seek(0)
             except Exception as e:
+                activity_logger.log_interaction(f"Error during file preview: {str(e)}", "error")
                 st.error(f"Erreur lors de l'aperçu: {e}")
 
 
     
     if uploaded_file and st.button("Indexer", type="primary"):
+        activity_logger.log_interaction(f"Document uploaded: {uploaded_file.name}", "info")
         with st.spinner("Traitement en cours..."):
-            # Sauvegarder le fichier dans data/raw
-            raw_path = Path("data/raw")
-            raw_path.mkdir(parents=True, exist_ok=True)
-            
-            file_path = raw_path / uploaded_file.name
-            with open(file_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
-            
-            # Créer une progress bar
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            
             try:
-                status_text.text("📄 Fichier sauvegardé...")
-                progress_bar.progress(20)
+                raw_path = Path("data/raw")
+                raw_path.mkdir(parents=True, exist_ok=True)
                 
-                status_text.text("🔄 Preprocessing en cours...")
-                progress_bar.progress(40)
+                file_path = raw_path / uploaded_file.name
+                with open(file_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
                 
-                status_text.text("🧮 Génération des embeddings...")
-                progress_bar.progress(60)
+                progress_bar = st.progress(0)
+                status_text = st.empty()
                 
-                success = st.session_state.doc_manager.add_document(
-                    index_name,
-                    str(file_path)
-                )
-                
-                progress_bar.progress(80)
-                status_text.text("📊 Indexation dans Elasticsearch...")
-                
-                progress_bar.progress(100)
-                
-                if success:
-                    st.success("✅ Document traité et indexé avec succès!")
-                    st.balloons()
-                else:
-                    st.error("❌ Erreur lors du traitement du document.")
+                try:
+                    status_text.text("📄 Fichier sauvegardé...")
+                    progress_bar.progress(20)
+                    
+                    status_text.text("🔄 Preprocessing en cours...")
+                    progress_bar.progress(40)
+                    
+                    status_text.text("🧮 Génération des embeddings...")
+                    progress_bar.progress(60)
+                    
+                    success = st.session_state.doc_manager.add_document(
+                        index_name,
+                        str(file_path)
+                    )
+                    
+                    progress_bar.progress(80)
+                    status_text.text("📊 Indexation dans Elasticsearch...")
+                    
+                    progress_bar.progress(100)
+                    
+                    if success:
+                        activity_logger.log_interaction(f"Document indexed successfully: {uploaded_file.name}", "info")
+                        st.success("✅ Document traité et indexé avec succès!")
+                        st.balloons()
+                    else:
+                        activity_logger.log_interaction(f"Document indexing failed: {uploaded_file.name}", "error")
+                        st.error("❌ Erreur lors du traitement du document.")
+                        
+                except Exception as e:
+                    activity_logger.log_interaction(f"Document processing error: {str(e)}\n{traceback.format_exc()}", "error")
+                    st.error(f"❌ Erreur lors du traitement: {str(e)}")
+                    with st.expander("Détails de l'erreur"):
+                        st.code(traceback.format_exc())
+                finally:
+                    progress_bar.empty()
+                    status_text.empty()
                     
             except Exception as e:
-                st.error(f"❌ Erreur: {str(e)}")
-            finally:
-                progress_bar.empty()
-                status_text.empty()
+                st.error(f"❌ Erreur lors de la sauvegarde du fichier: {str(e)}")
+                activity_logger.log_interaction(f"File save error: {str(e)}\n{traceback.format_exc()}", "error")
