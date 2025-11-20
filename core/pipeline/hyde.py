@@ -1,4 +1,5 @@
-# I will use an specific structured output agent to ensure the question is valid if not i will return the justifcation of the llm
+# I will use an specific structured output agent to ensure the question is
+# valid if not i will return the justifcation of the llm
 from core.types import HyDEAgentResponse
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
@@ -14,7 +15,7 @@ class HyDEAgent:
         self.temperature = temperature
         self.agent = self._initialize_agent()
         self.activity_logger = ActivityLogger("hyde_agent")
-        
+
     def _initialize_agent(self):
         try:
             model = init_chat_model(
@@ -32,21 +33,22 @@ class HyDEAgent:
         except Exception as e:
             self.activity_logger.log_interaction(f"Error initializing HyDE Agent: {e}", "error")
             raise e
-    
+
     def generate_hyde(self, question: str) -> HyDEAgentResponse:
         try:
             prompt = {
                 "messages": [{"role": "user", "content": f"{question}"}]
             }
-            response = self.agent.invoke(prompt) # type: ignore
-            
-            # verify that structured_response is inside 
+            response = self.agent.invoke(prompt)  # type: ignore
+
+            # verify that structured_response is inside
             if isinstance(response, dict) and 'structured_response' in response:
                 response = response['structured_response']
                 return response
             else:
                 print("Invalid response structure from hyde agent:", response)
-                return HyDEAgentResponse(**{"isSafe": False, "reasons": "Invalid response structure"})
+                return HyDEAgentResponse(
+                    **{"isSafe": False, "reasons": "Invalid response structure"})
         except Exception as e:
             self.activity_logger.log_interaction(f"Error generating HyDE: {e}", "error")
             raise e

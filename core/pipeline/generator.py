@@ -7,12 +7,13 @@ from langchain.tools import ToolRuntime
 from langgraph.checkpoint.memory import InMemorySaver
 from core.vector_store.logger import ActivityLogger
 
+
 class QAAgent:
-    def __init__(self, model_name=GENERATOR_MODEL_NAME, 
-                 system_prompt=SYSTEM_PROMPT, 
-                 temperature=0.7, 
-                 checkpointer: ToolRuntime = InMemorySaver() # type: ignore
-                 ): 
+    def __init__(self, model_name=GENERATOR_MODEL_NAME,
+                 system_prompt=SYSTEM_PROMPT,
+                 temperature=0.7,
+                 checkpointer: ToolRuntime = InMemorySaver()  # type: ignore
+                 ):
         self.model_name = model_name
         self.system_prompt = system_prompt
         self.temperature = temperature
@@ -21,7 +22,6 @@ class QAAgent:
         self.config = {"configurable": {"thread_id": "1"}}
         self.activity_logger = ActivityLogger("qa_agent")
 
-    
     def _initialize_agent(self):
         try:
             model = init_chat_model(
@@ -33,14 +33,14 @@ class QAAgent:
             return create_agent(
                 model=model,
                 system_prompt=self.system_prompt,
-                checkpointer=self.checkpointer, # type: ignore
+                checkpointer=self.checkpointer,  # type: ignore
                 name="QA Agent",
             )
         except Exception as e:
             self.activity_logger.log_interaction(f"Error initializing QA Agent: {e}", "error")
             raise e
-    
-    def answer(self, question:str, chunks:List[str]):
+
+    def answer(self, question: str, chunks: List[str]):
         try:
             context = "\n\n".join(chunks)
             prompt = {
@@ -48,7 +48,7 @@ class QAAgent:
                     {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {question}"}
                 ]
             }
-            
+
             response = self.agent.invoke(prompt, config=self.config)  # type: ignore
             answer = self.get_answer(response)
             self.activity_logger.log_interaction(f"Generated answer: {answer}", "info")
@@ -64,5 +64,6 @@ class QAAgent:
                 return message.content
             return "There was an error generating the answer. Check in generator.py"
         except Exception as e:
-            self.activity_logger.log_interaction(f"Error extracting answer from response: {e}", "error")
+            self.activity_logger.log_interaction(
+                f"Error extracting answer from response: {e}", "error")
             return "There was an error generating the answer. Check in generator.py"

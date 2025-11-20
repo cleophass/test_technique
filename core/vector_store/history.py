@@ -1,4 +1,3 @@
-
 from typing import List, Dict
 from core.vector_store.elastic_client import ElasticClient
 import datetime
@@ -7,16 +6,17 @@ from core.pipeline.title import TitleAgent
 from core.config import HISTORY_INDEX_NAME, MESSAGE_INDEX_NAME
 from core.vector_store.logger import ActivityLogger
 
+
 class History:
     def __init__(self):
-        self.history_index_name = HISTORY_INDEX_NAME # -> index for conversations
-        self.message_index_name = MESSAGE_INDEX_NAME # -> index for messages
+        self.history_index_name = HISTORY_INDEX_NAME  # -> index for conversations
+        self.message_index_name = MESSAGE_INDEX_NAME  # -> index for messages
         self.es_client = ElasticClient(hosts="http://localhost:9200")
         self.history_index_mapping = HISTORY_INDEX_MAPPING
         self.message_index_mapping = MESSAGE_INDEX_MAPPING
         self.title_agent = TitleAgent()
         self.activity_logger = ActivityLogger("history_manager")
-       
+
     def list_history(self):
         try:
             response = self.es_client.es.search(
@@ -42,9 +42,7 @@ class History:
         except Exception as e:
             self.activity_logger.log_interaction(f"Error listing history: {e}", "error")
             return []
-        
-            
-    
+
     def load_messages(self, conversation_id: str) -> List[dict]:
         try:
             response = self.es_client.es.search(
@@ -71,10 +69,10 @@ class History:
         except Exception as e:
             self.activity_logger.log_interaction(f"Error loading messages: {e}", "error")
             return []
-        
-    def create_conversation(self, conversation_id: str,message:str) -> bool:
+
+    def create_conversation(self, conversation_id: str, message: str) -> bool:
         try:
-            try : 
+            try :
                 title = self.title_agent.create_title(question=message).title
             except Exception as e:
                 self.activity_logger.log_interaction(f"Error generating title: {e}", "error")
@@ -82,8 +80,10 @@ class History:
             conversation_doc = {
                 "id": conversation_id,
                 "title": title,
-                "created_at": datetime.datetime.utcnow().replace(microsecond=0).isoformat().replace('T', ' ')
-            }
+                "created_at": datetime.datetime.utcnow().replace(
+                    microsecond=0).isoformat().replace(
+                    'T',
+                    ' ')}
             self.es_client.es.index(index=self.history_index_name, document=conversation_doc)
             print("HISTORY: Conversation created successfully")
             return True
@@ -91,33 +91,33 @@ class History:
             self.activity_logger.log_interaction(f"Error creating conversation: {e}", "error")
             return False
 
-       
-    
-    def add_message(self,message: str, conversation_id: str,role: str) -> bool:
+    def add_message(self, message: str, conversation_id: str, role: str) -> bool:
         try:
             message_doc = {
-                "id":"2345",
+                "id": "2345",
                 "conversation_id": conversation_id,
-                "message":message,
+                "message": message,
                 "role": role,
-                "timestamp": datetime.datetime.utcnow().replace(microsecond=0).isoformat().replace('T', ' ')
-            }
+                "timestamp": datetime.datetime.utcnow().replace(
+                    microsecond=0).isoformat().replace(
+                    'T',
+                    ' ')}
             return self.add_message_to_history(self.message_index_name, message=message_doc)
         except Exception as e:
             self.activity_logger.log_interaction(f"Error adding message: {e}", "error")
             return False
-        
-    def create_history_index(self):    
-        self.es_client.create_index(self.history_index_name, mappings=self.history_index_mapping)     
-              
+
+    def create_history_index(self):
+        self.es_client.create_index(self.history_index_name, mappings=self.history_index_mapping)
+
     def create_message_index(self):
         self.es_client.create_index(self.message_index_name, mappings=self.message_index_mapping)
-    
+
     def add_message_to_history(self, index_name: str, message: Dict, ) -> bool:
         try:
             self.es_client.es.index(index=index_name, document=message)
             print("HISTORY: Message added successfully")
-            return True    
+            return True
         except Exception as e:
             self.activity_logger.log_interaction(f"Error adding message to history: {e}", "error")
             return False

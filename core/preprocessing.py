@@ -5,29 +5,25 @@ import re
 import datetime
 from core.vector_store.logger import ActivityLogger
 
-class Preprocessor:
-    """
-    Pereprocess files based on their type.
-    can both preprocess a file or a folder
-    """
 
+class Preprocessor:
     def __init__(self, raw_path: str, clean_path: str):
-        self.raw_path = raw_path # maybe not needed
+        self.raw_path = raw_path  # maybe not needed
         self.clean_path = clean_path
         self.activity_logger = ActivityLogger("preprocessor")
 
     # Process file
     def process_file(self, file_path: str) -> str:
-        try : # Detect file type
+        try :  # Detect file type
             print(f"PREPROCESSING: Preprocessing file: {file_path}")
-            json_result = None  
+            json_result = None
             if file_path.endswith('.csv'):
                 json_result = self._process_csv(file_path)
             elif file_path.endswith('.html'):
                 json_result = self._process_html(file_path)
             elif file_path.endswith('.txt'):
                 json_result = self._process_txt(file_path)
-        
+
             # save file type to clean_path
             if json_result:
                 doc_title = json_result['doc_title']
@@ -38,7 +34,8 @@ class Preprocessor:
                 print(f"PREPROCESSING: Processed and saved: {clean_file_path}")
                 return clean_file_path
             else:
-                self.activity_logger.log_interaction(f"Skipping empty or invalid file: {file_path}", "warning")
+                self.activity_logger.log_interaction(
+                    f"Skipping empty or invalid file: {file_path}", "warning")
                 return ""
         except Exception as e:
             self.activity_logger.log_interaction(f"Error processing file {file_path}: {e}", "error")
@@ -47,11 +44,13 @@ class Preprocessor:
     # Process folder
     def process_folder(self, folder_path: str):
         try :
-            fnames = [ os.path.join(folder_path, x) for x in os.listdir(folder_path) if x.endswith('.txt') or x.endswith('.csv') or x.endswith('.html')]
+            fnames = [os.path.join(folder_path, x) for x in os.listdir(
+                folder_path) if x.endswith('.txt') or x.endswith('.csv') or x.endswith('.html')]
             for fname in fnames:
                 self.process_file(fname)
         except Exception as e:
-            self.activity_logger.log_interaction(f"Error processing folder {folder_path}: {e}", "error")
+            self.activity_logger.log_interaction(
+                f"Error processing folder {folder_path}: {e}", "error")
             raise e
 
     def _process_csv(self, file_path: str) -> Dict:
@@ -60,7 +59,8 @@ class Preprocessor:
             df = df.dropna(axis=1, how='all')
             df = df.drop_duplicates()
 
-            # here I will add a step to truncate the content if too long but in the funture we could chunk documents
+            # here I will add a step to truncate the content if too long but in the
+            # funture we could chunk documents
             if len(df) > 20:
                 df = df.head(20)
             json_data = df.to_dict(orient='records')
@@ -78,9 +78,10 @@ class Preprocessor:
             print(f"PREPROCESSING: Processed CSV file: {file_path}")
             return json_result
         except Exception as e:
-            self.activity_logger.log_interaction(f"Error processing CSV file {file_path}: {e}", "error")
+            self.activity_logger.log_interaction(
+                f"Error processing CSV file {file_path}: {e}", "error")
             return {}
-    
+
     def _process_html(self, file_path: str) -> Dict:
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -109,9 +110,9 @@ class Preprocessor:
             print(f"PREPROCESSING: Processed HTML file: {file_path}")
             return json_result
         except Exception as e:
-            self.activity_logger.log_interaction(f"Error processing HTML file {file_path}: {e}", "error")
+            self.activity_logger.log_interaction(
+                f"Error processing HTML file {file_path}: {e}", "error")
             return {}
-        
 
     def _process_txt(self, file_path: str) -> Dict:
         try:
@@ -121,16 +122,16 @@ class Preprocessor:
             if not content.strip():
                 print(f"Warning: The file {file_path} is empty.")
                 return {}
-        
+
             # remove extra new lines and spaces
             content = re.sub(r'\n\s*\n', '\n\n', content)
             content = content.strip()
             if len(content) > 800:
                 content = content[:800]
-            
+
             date = self._extract_date(content)
             doc_title = os.path.splitext(os.path.basename(file_path))[0]
-            
+
             json_result = {
                 "doc_title": doc_title,
                 "content": content,
@@ -143,7 +144,8 @@ class Preprocessor:
             return json_result
             print(f"PREPROCESSING: Processed TXT file: {file_path}")
         except Exception as e:
-            self.activity_logger.log_interaction(f"Error processing TXT file {file_path}: {e}", "error")
+            self.activity_logger.log_interaction(
+                f"Error processing TXT file {file_path}: {e}", "error")
             return {}
 
     def _extract_date(self, text: str) -> str:
@@ -156,6 +158,3 @@ class Preprocessor:
         except Exception as e:
             self.activity_logger.log_interaction(f"Error extracting date from text: {e}", "error")
             return ""
-        
-
-
