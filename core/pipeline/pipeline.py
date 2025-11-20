@@ -92,7 +92,7 @@ class RAGPipeline:
         try:
             
             update_status("Retrieving documents for rewritten question...")
-            rewritten_docs = self.retriever.retrieve_documents(rewritten_question.rewritten_question, top_k=4)
+            rewritten_docs = self.retriever.retrieve_documents(rewritten_question.rewritten_question, top_k=4, source="Rewritten")
             update_status(f"Retrieved {len(rewritten_docs.hits)} documents for rewritten question.")
 
         except Exception as e:
@@ -107,7 +107,7 @@ class RAGPipeline:
         # retrieval for hyde question
         try:
             update_status("Retrieving documents for HyDE question...")
-            hyde_docs = self.retriever.retrieve_documents(hyde_response.hypothetical_answer, top_k=4)
+            hyde_docs = self.retriever.retrieve_documents(hyde_response.hypothetical_answer, top_k=4, source="HyDE")
             update_status(f"Retrieved {len(hyde_docs.hits)} documents for HyDE question.")
         except Exception as e:
             self.activity_logger.log_interaction(f"Error during document retrieval for HyDE: {e}", "error")
@@ -124,8 +124,11 @@ class RAGPipeline:
             
         try:
             update_status("Reranking documents...")
-            
-            reranked_docs = self.reranker.rerank(question, merged_docs, top_n=2) 
+            if rewritten_question :
+                reranked_docs = self.reranker.rerank(rewritten_question.rewritten_question, merged_docs, top_n=2) 
+            else:
+                reranked_docs = self.reranker.rerank(question, merged_docs, top_n=2) 
+
             # extract all content as a single list  of string 
             reranked_contents = [doc.source.get('content', '') for doc in reranked_docs.hits]
             update_status(f"Reranked to {len(reranked_docs.hits)} documents.")

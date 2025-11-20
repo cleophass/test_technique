@@ -6,7 +6,7 @@ from core.setup import Setup
 from core.vector_store.logger import ActivityLogger
 import traceback
 
-st.title("Hi, ask me anything about your documents!")
+st.title("Bonjour !")
 
 with st.sidebar:
     if "setup_verified" not in st.session_state:

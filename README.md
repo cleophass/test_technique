@@ -1,97 +1,173 @@
-# Test technique - Tech / Interface chat avec RAG
+# Guide d'installation et de configuration
 
-## **1. Contexte**
+## Table des matières
 
-Emilia Parenti dirige un **cabinet d’avocats en droit des affaires**, situé à Paris.
+1. [Prérequis](#prérequis)
+2. [Installation de l'environnement](#installation-de-lenvironnement)
+3. [Configuration des services](#configuration-des-services)
+4. [Configuration de l'application](#configuration-de-lapplication)
+5. [Lancement de l'application](#lancement-de-lapplication)
 
-Son équipe traite quotidiennement des documents confidentiels : contrats, litiges, notes internes, jurisprudences, etc. Emilia souhaite mettre en place un **chatbot interne sécurisé** pour faciliter l’accès à l'information juridique tout en garantissant la confidentialité.
-
-Pour cette **preuve de concept (PoC)**, les documents utilisés sont **anonymisés** avec de faux noms, et le modèle de langage devra être **appelé via une API** sécurisée.
-
----
-
-## **2. Objectif fonctionnel**
-
-Le but du test est de concevoir une **application Streamlit** intégrant un système de **RAG (Retrieval-Augmented Generation)** basé sur des documents juridiques uploadés manuellement. L’objectif est de tester :
-
-- ta capacité à **intégrer un LLM à une interface personnalisée**
-- ta rigueur dans le **pré-traitement et vectorisation des documents**
-- la qualité de ton **architecture logicielle**
-
-### **2.1 Page 1 – Interface Chatbot**
-
-Cette page permet à un collaborateur de :
-
-- Poser une question à l’IA via une interface de chat
-- Recevoir une réponse basée exclusivement sur les documents internes
-- Créer une nouvelle conversation (💬 bonus : gestion d’un historique de conversations)
-
-Toutes les réponses doivent être générées à partir des **documents vectorisés** (pas de génération hors corpus).
-
-### **2.2 Page 2 – Gestion des documents**
-
-Cette page permet à l’utilisateur de :
-
-- **Uploader** des documents (`.txt`, `.csv`, `.html`)
-- **Supprimer** des documents existants
-- Automatiquement :
-    - **Nettoyer les fichiers**
-    - **Vectoriser** le contenu pour la base RAG
-
-L’ensemble des documents doit être indexé pour que le modèle puisse s’y référer via un moteur vectoriel (type FAISS, Chroma, etc.).
 
 ---
 
-## **3. Livrables & Environnement de Test**
+## Prérequis
 
-### **3.1 Setup minimal**
+### Logiciels
 
-Avant de commencer :
+- **Python** : Version 3.10 ou supérieure
+- **Docker** : Version 20.x ou supérieure
+- **Docker Compose** : Version 2.x ou supérieure
+- **uv** 
 
-- Créer un environnement Python dédié
-- Installer les dépendances nécessaires (ex : `streamlit`, `langchain`, `openai`, `chromadb`, etc.)
-- Utiliser un modèle LLM disponible via API (`OpenAI (clef fournit)`, `Mistral`, `Claude`, etc.)
-- Créer un dossier local ou une base vectorielle pour stocker les embeddings
 
-### **3.2 Livrables attendus**
 
-| Élément | Détail attendu |
-| --- | --- |
-| 💻 Application | Interface Streamlit fonctionnelle avec deux pages |
-| 📦 Gestion de fichiers | Upload / delete + vectorisation automatisée |
-| 🔗 Intégration LLM | API propre, sécurisé, réponse contrôlée via RAG |
-| 🧹 Nettoyage des données | Pipeline de preprocessing simple et efficace |
-| 📜 Historique (bonus) | Gestion conversationnelle avec suivi des échanges |
-| 📁 README | Instructions claires pour exécuter le projet en local |
-| 🔗 GitHub | Repo : https://github.com/AI-Sisters/test_technique |
+### Clés API
+
+- **OpenAI API Key** 
+- **LangSmith API Key** (optionnel, pour le traçage)
+
+
+## Installation de l'environnement
+
+### 1. Cloner le repository
+
+```bash
+git clone https://github.com/AI-Sisters/test_technique.git
+cd test_technique
+```
+
+### 2. Créer l'environnement Python
+
+#### Avec uv 
+
+```bash
+uv sync
+```
+
+
+### Vérifier l'installation des dépendances
+
+```bash
+# Avec uv
+uv pip list
+
+# Avec pip
+pip list
+```
 
 ---
 
-## **4. Évaluation**
+## Configuration des services
 
-| Critère | Éléments attendus | Points |
-| --- | --- | --- |
-| ⚙️ Fonctionnalité | Upload, RAG, interface chat, vectorisation | 150pt |
-| 🧱 Architecture | Structure du projet claire, code modulaire | 100pt |
-| 🤖 Intégration IA | API LLM bien utilisée, réponses cohérentes | 75pt |
-| 🧼 Données | Pipeline de nettoyage fiable et simple | 50pt |
-| 🧪 Robustesse | Gestion des erreurs, logs, stabilité | 50pt |
-| 🎯 UX | Interface fluide, logique d’usage claire | 50pt |
-| 🎁 Bonus | Historique, logs, sécurité, documentation | +10 à +50pt |
-| **Total** |  |  |
+### Lancer Elasticsearch et Kibana avec Docker
 
-> 🧠 Tu peux utiliser tous les outils d’IA à disposition (ChatGPT, Copilot, etc.), mais la rigueur et la qualité de ton code primeront.
-> 
+```bash
+docker-compose up -d
+```
+
+### Vérifier que les services sont opérationnels
+
+```bash
+docker ps
+
+# Vous devriez voir 2 conteneurs en cours d'exécution :
+# - elasticsearch (port 9200)
+# - kibana (port 5601)
+```
+
+### Tester la connexion à Elasticsearch
+
+```bash
+# Test de connexion
+curl http://localhost:9200
+
+# Réponse attendue : JSON avec les informations du cluster
+# Si vous voyez une erreur, attendez quelques instants que Elasticsearch démarre complètement et réessayez.
+```
+
+### Accéder à Kibana (optionnel, pour monitoring)
+
+Ouvrir dans un navigateur : [http://localhost:5601](http://localhost:5601)
 
 ---
 
-## **5. Conclusion**
+## Configuration de l'application
 
-Ce test a pour but de valider :
+### 1. Créer le fichier `.env`
 
-- Ta capacité à **prototyper un outil complet en autonomie**
-- Ton aisance avec les concepts de **RAG, vectorisation, et intégration LLM**
-- Ta **rigueur technique** (structure, propreté du code, gestion des erreurs)
-- Ton **agilité** : apprendre vite, aller à l’essentiel, mais proprement
+À la racine du projet, créer un fichier `.env` :
 
-Tu es libre dans tes choix techniques tant que tu **justifies ton raisonnement**, que ton code est **complet et maintenable**, et que le prototype **fonctionne avec fluidité**.
+```bash
+touch .env
+```
+
+### 2. Ajouter la clé OpenAI
+
+Éditer le fichier `.env` et ajouter :
+
+```env
+OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+### 3. Configurer LangSmith (optionnel)
+Si vous souhaitez utiliser LangSmith pour le traçage, ajoutez également :
+
+```env
+LANGSMITH_API_KEY=lsv2_pt_....
+LANGSMITH_TRACING=true
+```
+Pour accéder a "traces" dans LangSmith, vous pouvez utiliser ce lien : https://smith.langchain.com/
+
+### 3. Vérifier la configuration dans `core/config.py`
+
+Le fichier `core/config.py` contient les paramètres des modèles :
+
+```python
+EMBEDDINGS_MODEL_NAME="paraphrase-multilingual-mpnet-base-v2"
+REWRITER_MODEL_NAME="gpt-4.1"
+GUARDRAILS_MODEL_NAME="gpt-4.1"
+HYDE_MODEL_NAME="gpt-4.1"
+GENERATOR_MODEL_NAME="gpt-4.1"
+TITLE_MODEL_NAME="gpt-4.1"
+RERANKER_MODEL_NAME="antoinelouis/crossencoder-camembert-base-mmarcoFR"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+DOCUMENTS_INDEX_NAME="documents_index"
+HISTORY_INDEX_NAME="history_index"
+MESSAGE_INDEX_NAME="message_index"
+LOGGER_INDEX_NAME="logger_index"
+```
+
+Ces paramètres peuvent être modifiés selon vos besoins.
+
+---
+
+## Lancement de l'application
+
+### Méthode 1 : Avec le script `run.sh` (recommandé)
+
+```bash
+# Rendre le script exécutable
+chmod +x run.sh
+
+# Lancer l'application
+./run.sh
+```
+
+Le script effectue automatiquement :
+1. Démarrage des conteneurs Docker (Elasticsearch + Kibana)
+2. Lancement de l'application Streamlit
+PS: Le premier lancement peut prendre quelques minutes. 
+
+### ⚠️ **Si rien ne s'affiche sur streamlit pensez à rafraîchir la page** ⚠️
+
+
+### 3. Accéder à l'application
+
+L'application sera disponible à l'adresse : [http://localhost:8501](http://localhost:8501)
+
+### 4. Ajouter des documents
+Pour ajouter des documents, aller dans la page "Documents" de l'application Streamlit et utiliser l'interface d'upload. Les formats supportés sont : `.txt`, `.csv`, `.html`.
+Le dossier "data/raw/" contient déjà des fichier, au premier lancement de streamlit les documents seront indexés automatiquement.
+
+
+
