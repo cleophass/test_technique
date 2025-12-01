@@ -30,9 +30,10 @@ class Retriever:
                     index=item.get("_index", ""),
                     id=item.get("_id", ""),
                     score=item.get("_score", 0.0),
-                    source=item.get("_source", {})
+                    source=item.get("_source", {}),
+                    title=item.get("_source", {}).get("doc_title", "No Title")
                 )
-                print(f"{source} RETRIEVER: document ID {es_answer_item.id} with score {es_answer_item.score}")
+                print(f"{source} RETRIEVER: document Title {es_answer_item.title} with score {es_answer_item.score}")
                 es_answer_items.append(es_answer_item)
             es_answer = ElasticsearchAnswer(hits=es_answer_items)
             return es_answer

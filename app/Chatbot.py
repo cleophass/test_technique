@@ -69,8 +69,8 @@ except Exception as e:
 
 with st.sidebar:
     if my_history:
-        for conversation in my_history:
-            if st.button(conversation["title"], type="secondary"):
+        for i, conversation in enumerate(my_history):
+            if st.button(conversation["title"], type="secondary", key=f"conversation_button_{i}"):
                 try:
                     activity_logger.log_interaction(
                         f"Switched to conversation {conversation['id']}", "info")

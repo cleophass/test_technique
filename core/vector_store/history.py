@@ -76,7 +76,7 @@ class History:
                 title = self.title_agent.create_title(question=message).title
             except Exception as e:
                 self.activity_logger.log_interaction(f"Error generating title: {e}", "error")
-                title = "Nouvelle Conversation"
+                title = "Conversation"
             conversation_doc = {
                 "id": conversation_id,
                 "title": title,

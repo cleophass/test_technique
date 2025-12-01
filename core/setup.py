@@ -46,16 +46,28 @@ class Setup:
                     clean_path="data/clean"
                 )
                 print("SETUP: DocumentsManager initialized successfully")
-                print("SETUP: Verify that index as been created...")
+                print("SETUP: Verify that document index as been created...")
                 if doc_manager.es_client.verify_index(self.documents_index_name):
-                    print("SETUP: Index exist")
+                    print("SETUP: Document index exist")
                 else :
-                    print("SETUP: Index does not exist")
+                    print("SETUP: Document index does not exist")
                     doc_manager.create_document_index()
                 print("SETUP: Starting to process folder...")
                 doc_manager.process_folder("documents_index", "data/raw")
             else:
+                
                 print("SETUP: Documents already processed.")
+                print("SETUP: Verify that document index as been created...")
+                doc_manager = DocumentsManager(
+                    raw_path="data/raw",
+                    clean_path="data/clean"
+                )
+                if doc_manager.es_client.verify_index(self.documents_index_name):
+                    print("SETUP: Document index exist")
+                else :
+                    print("SETUP: Document index does not exist")
+                    doc_manager.create_document_index()
+                
         except Exception as e:
             self.activity_logger.log_interaction(f"documents processing error : {e}", "error")
             return False

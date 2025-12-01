@@ -9,9 +9,6 @@ import traceback
 
 activity_logger = ActivityLogger(source="documents_manager")
 
-st.set_page_config(
-    layout="wide"
-)
 
 if 'doc_manager' not in st.session_state:
     try:
@@ -101,51 +98,36 @@ with tab1:
         if selected_idx is not None:
             selected_doc = documents[selected_idx]
 
-            col1, col2 = st.columns([3, 1])
 
-            with col1:
-                with st.expander("Contenu du document", expanded=False):
-                    content = selected_doc["_source"].get("content", "")
-                    st.text_area(
-                        "Contenu",
-                        value=content[:1000] + ("..." if len(content) > 1000 else ""),
-                        height=200,
-                        disabled=True
+            with st.expander("Contenu du document", expanded=False):
+                content = selected_doc["_source"].get("content", "")
+                st.text_area(
+                    "Contenu",
+                    value=content[:1000] + ("..." if len(content) > 1000 else ""),
+                    height=200,
+                    disabled=True
+                )
+
+          
+            st.markdown("### 🗑️ Supprimer")
+            if st.button("Supprimer ce document", type="secondary"):
+                try:
+                    activity_logger.log_interaction(
+                        f"Document deleted: {selected_doc['_id']}", "info")
+                    res = st.session_state.doc_manager.delete_document(
+                        index_name,
+                        selected_doc["_id"],
+                        selected_doc["_source"].get("doc_title", ""),
+                        selected_doc["_source"].get("metadata", {}).get("source", "")
                     )
+                    if res:
+                        st.success("Document supprimé!")
+                        st.rerun()
 
-                with st.expander("ℹMétadonnées", expanded=True):
-                    metadata = selected_doc["_source"].get("metadata", {})
-                    col_a, col_b = st.columns(2)
-                    with col_a:
-                        st.write(f"**Source:** {metadata.get('source', 'N/A')}")
-                        st.write(f"**Date:** {metadata.get('date', 'N/A')}")
-                        st.write(f"**Modifié:** {metadata.get('modified', 'N/A')}")
-                    with col_b:
-                        st.write(
-                            f"**Modèle d'embedding:** {metadata.get('embedding_model', 'N/A')}")
-                        st.write(f"**Dimension:** {metadata.get('embedding_dimension', 'N/A')}")
-                        st.write(f"**Date embedding:** {metadata.get('embedding_date', 'N/A')}")
-
-            with col2:
-                st.markdown("### 🗑️ Supprimer")
-                if st.button("Supprimer ce document", type="secondary"):
-                    try:
-                        activity_logger.log_interaction(
-                            f"Document deleted: {selected_doc['_id']}", "info")
-                        res = st.session_state.doc_manager.delete_document(
-                            index_name,
-                            selected_doc["_id"],
-                            selected_doc["_source"].get("doc_title", ""),
-                            selected_doc["_source"].get("metadata", {}).get("source", "")
-                        )
-                        if res:
-                            st.success("Document supprimé!")
-                            st.rerun()
-
-                    except Exception as e:
-                        st.error(f"Erreur lors de la suppression: {str(e)}")
-                        activity_logger.log_interaction(
-                            f"Document deletion error: {str(e)}\n{traceback.format_exc()}", "error")
+                except Exception as e:
+                    st.error(f"Erreur lors de la suppression: {str(e)}")
+                    activity_logger.log_interaction(
+                        f"Document deletion error: {str(e)}\n{traceback.format_exc()}", "error")
 
         else:
             st.info("Aucun document trouvé dans l'index.")

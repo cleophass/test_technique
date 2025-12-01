@@ -27,7 +27,7 @@ class Reranker:
                 print("RERANKER: Documents before reranking:")
                 for doc in docs.hits:
                     title = doc.source.get('doc_title', 'No Title')
-                    print(f"RERANKER: Document ID: {doc.id}, Title: {title}")
+                    print(f"RERANKER: Title: {title}, Score: {doc.score}")
             except Exception as e:
                 self.activity_logger.log_interaction(
                     f"Error logging document titles before reranking: {e}", "error")
@@ -37,16 +37,14 @@ class Reranker:
             pairs = [(query, content) for content in doc_contents]
             inputs = self.tokenizer(
                 pairs,
-                padding=True,
-                truncation=True,
+                padding=True, # pour que toutes les sequences aient la meme longueur
+                truncation=True, # pour couper les sequences trop longues
                 return_tensors="pt",
                 max_length=512
             )
 
             with torch.no_grad():
-                scores = self.model(**inputs).logits.squeeze(-1)
-            if scores.dim() == 0:
-                scores = scores.unsqueeze(0)
+                scores = self.model(**inputs).logits.squeeze(-1) # passe de [[ 0.8932],[-4.3728],[-2.2026]] a [0.8932,-4.3728,-2.2026]
             k = min(top_n, len(docs.hits))
             top_indices = torch.topk(scores, k).indices
             # Return only the top n documents
@@ -56,7 +54,7 @@ class Reranker:
                 print("RERANKER: Documents after reranking:")
                 for doc in reranked_hits:
                     title = doc.source.get('doc_title', 'No Title')
-                    print(f"RERANKER: Document ID: {doc.id}, Title: {title}")
+                    print(f"RERANKER: Title: {title}, Score: {scores[docs.hits.index(doc)].item()}")
             except Exception as e:
                 self.activity_logger.log_interaction(
                     f"Error logging document titles after reranking: {e}", "error")

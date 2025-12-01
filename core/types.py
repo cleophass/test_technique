@@ -51,6 +51,7 @@ class ElasticsearchAnswerItem(BaseModel):
     id: str
     score: float
     source: Dict[str, Any]
+    title: str
 
 
 class ElasticsearchAnswer(BaseModel):
